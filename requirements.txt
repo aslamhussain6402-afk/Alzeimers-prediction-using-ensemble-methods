@@ -1,0 +1,8 @@
+flask>=2.3
+numpy
+pandas
+scikit-learn
+xgboost
+lightgbm
+imbalanced-learn
+tensorflow

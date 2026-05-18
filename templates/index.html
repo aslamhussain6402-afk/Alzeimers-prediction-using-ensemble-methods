@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NeuroScan · Alzheimer Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090f;--surface:#0e1119;--card:#13161f;--card2:#181c27;
+  --border:#1f2436;--border2:#252b3e;
+  --accent:#4f8ef7;--accent2:#7c5fe6;--accentg:rgba(79,142,247,0.15);
+  --green:#3dd68c;--amber:#f5a623;--red:#f05252;--purple:#a78bfa;
+  --text:#dde3f5;--muted:#606882;--muted2:#464e68;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 90% 55% at 15% 5%,rgba(79,142,247,0.05) 0%,transparent 65%),
+    radial-gradient(ellipse 70% 60% at 85% 85%,rgba(124,95,230,0.05) 0%,transparent 65%),
+    radial-gradient(ellipse 50% 40% at 50% 50%,rgba(61,214,140,0.02) 0%,transparent 70%);
+  pointer-events:none
+}
+
+/* ── Layout ────────────────────────────────────────────── */
+.wrap{max-width:1280px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+
+/* ── Header ────────────────────────────────────────────── */
+header{padding:2rem 0 1.8rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.logo{width:46px;height:46px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:13px;display:grid;place-items:center;font-size:1.5rem;box-shadow:0 0 28px rgba(79,142,247,.25);flex-shrink:0}
+.brand h1{font-family:'DM Serif Display',serif;font-size:1.7rem;letter-spacing:-.02em;background:linear-gradient(135deg,#dde3f5 40%,#7c9ef4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand p{color:var(--muted);font-size:.8rem;margin-top:.15rem}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.badge{padding:.3rem .85rem;border-radius:999px;font-size:.72rem;font-family:'DM Mono',monospace;letter-spacing:.05em}
+.badge-green{background:rgba(61,214,140,.1);color:var(--green);border:1px solid rgba(61,214,140,.2)}
+.badge-blue{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+
+/* ── Metrics strip ─────────────────────────────────────── */
+.metrics-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:1.8rem 0}
+.mc{background:var(--surface);padding:1.1rem 1.3rem;text-align:center;transition:background .2s}
+.mc:hover{background:var(--card)}
+.mc .lbl{font-size:.65rem;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.45rem}
+.mc .val{font-size:1.6rem;font-family:'DM Serif Display',serif;color:var(--accent)}
+.mc .bar{height:3px;border-radius:999px;background:var(--border2);margin-top:.55rem;overflow:hidden}
+.mc .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width 1.3s cubic-bezier(.16,1,.3,1)}
+
+/* ── Base model row ────────────────────────────────────── */
+.base-row{display:flex;gap:.6rem;margin-bottom:1.8rem;flex-wrap:wrap}
+.base-chip{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.45rem .9rem;font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:110px;transition:border-color .2s}
+.base-chip:hover{border-color:var(--border2)}
+.base-chip .bc-name{font-family:'DM Mono',monospace;color:var(--muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
+.base-chip .bc-val{color:var(--accent);font-weight:600;font-size:.9rem}
+
+/* ── Main layout ───────────────────────────────────────── */
+.main{display:grid;grid-template-columns:1fr 380px;gap:1.4rem;margin-bottom:3rem}
+
+/* ── Form card ─────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.8rem}
+.card-hdr{display:flex;align-items:center;gap:.7rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.card-hdr h2{font-family:'DM Serif Display',serif;font-size:1.15rem}
+.card-hdr .icon{font-size:1rem}
+.tag{font-size:.65rem;font-family:'DM Mono',monospace;padding:.2rem .55rem;border-radius:6px;letter-spacing:.06em;white-space:nowrap}
+.tag-sel{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+.tag-all{background:rgba(96,104,130,.1);color:var(--muted);border:1px solid var(--border)}
+
+/* ── Section dividers ──────────────────────────────────── */
+.sec-hdr{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding:.5rem 0 .7rem;border-top:1px solid var(--border);margin-top:1rem;display:flex;align-items:center;gap:.5rem}
+.sec-hdr:first-child{border-top:none;margin-top:0}
+.sec-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.sec-dot.amber{background:var(--amber)}
+
+/* ── Field grid ────────────────────────────────────────── */
+.field-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.9rem}
+
+/* ── Individual field ──────────────────────────────────── */
+.field{display:flex;flex-direction:column;gap:.35rem;position:relative}
+.field.selected-feat .field-inner{border-color:rgba(79,142,247,.35);background:rgba(79,142,247,.04)}
+.field.selected-feat .field-inner:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+.field-inner{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.field-inner:focus-within{border-color:rgba(79,142,247,.5);box-shadow:0 0 0 3px rgba(79,142,247,.1)}
+.field label{font-size:.67rem;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:.55rem .75rem .0rem;display:block;cursor:default}
+.field input,.field select{background:transparent;border:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;padding:.3rem .75rem .55rem;outline:none;width:100%;cursor:text}
+.field select{cursor:pointer}
+.field input::placeholder{color:var(--muted2)}
+.field select option{background:#1a1e2e}
+.range-hint{font-size:.62rem;font-family:'DM Mono',monospace;color:var(--muted2);display:flex;align-items:center;gap:.35rem}
+.range-pill{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:.08rem .4rem;font-size:.6rem;color:var(--muted)}
+.star{color:var(--accent);font-size:.6rem;margin-left:.2rem;vertical-align:super}
+
+/* ── Predict button ────────────────────────────────────── */
+.predict-btn{margin-top:1.6rem;width:100%;padding:.9rem;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;letter-spacing:.02em;transition:opacity .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 22px rgba(79,142,247,.28)}
+.predict-btn:hover:not(:disabled){opacity:.92;transform:translateY(-1px);box-shadow:0 8px 30px rgba(79,142,247,.35)}
+.predict-btn:active:not(:disabled){transform:translateY(0)}
+.predict-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── Legend ────────────────────────────────────────────── */
+.legend{display:flex;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:3px}
+.leg-dot.sel{background:var(--accent)}
+.leg-dot.all{background:var(--muted2)}
+
+/* ── Right panel ───────────────────────────────────────── */
+.right{display:flex;flex-direction:column;gap:1.2rem}
+
+.result-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.8rem;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;transition:border-color .4s,background .4s}
+.result-box.alz{border-color:rgba(240,82,82,.45);background:rgba(240,82,82,.03)}
+.result-box.nc {border-color:rgba(61,214,140,.45);background:rgba(61,214,140,.03)}
+.result-icon{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;font-size:1.8rem;margin-bottom:.9rem;transition:background .4s}
+.result-box.alz .result-icon{background:rgba(240,82,82,.12)}
+.result-box.nc  .result-icon{background:rgba(61,214,140,.12)}
+.result-label{font-family:'DM Serif Display',serif;font-size:1.4rem;margin-bottom:.35rem}
+.result-box.alz .result-label{color:var(--red)}
+.result-box.nc  .result-label{color:var(--green)}
+.result-sub{font-size:.78rem;color:var(--muted);line-height:1.5}
+.empty-icon{font-size:2.4rem;opacity:.2;margin-bottom:.7rem}
+.empty-txt{color:var(--muted);font-size:.85rem;line-height:1.6}
+
+/* ── Prob bars ─────────────────────────────────────────── */
+.prob-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.5rem}
+.prob-title{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem}
+.prob-row{margin-bottom:.85rem}
+.prob-rh{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.32rem}
+.prob-rh .pname{color:var(--text);font-weight:500}
+.prob-rh .ppct{font-family:'DM Mono',monospace;color:var(--muted)}
+.prob-track{height:7px;background:var(--border2);border-radius:999px;overflow:hidden}
+.prob-fill{height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+.prob-fill.alz{background:linear-gradient(90deg,#f05252,#f97316)}
+.prob-fill.nc {background:linear-gradient(90deg,#3dd68c,#10b981)}
+
+/* ── Alert ─────────────────────────────────────────────── */
+.alert{padding:.8rem 1rem;border-radius:10px;font-size:.82rem;background:rgba(240,82,82,.1);border:1px solid rgba(240,82,82,.2);color:#fca5a5;margin-top:.9rem;display:none}
+
+/* ── Spinner ────────────────────────────────────────────── */
+.sp{width:18px;height:18px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:.45rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Fade-in ────────────────────────────────────────────── */
+.fi{animation:fi .45s ease forwards}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Footer ─────────────────────────────────────────────── */
+footer{border-top:1px solid var(--border);padding:1.3rem 0;text-align:center;color:var(--muted);font-size:.74rem}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media(max-width:960px){.main{grid-template-columns:1fr}.metrics-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:580px){.metrics-strip{grid-template-columns:repeat(2,1fr)}.base-row{gap:.4rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Header -->
+<header>
+  <div class="logo">🧠</div>
+  <div class="brand">
+    <h1>NeuroScan</h1>
+    <p>Hybrid Ensemble · XGBoost + Random Forest + LightGBM + DNN + Stacking</p>
+  </div>
+  <div class="hdr-right">
+    <span class="badge badge-green">● MODEL READY</span>
+    <span class="badge badge-blue" id="classTag">Binary</span>
+  </div>
+</header>
+
+<!-- Metrics strip -->
+<div class="metrics-strip">
+  <div class="mc"><div class="lbl">Accuracy</div><div class="val" id="mAcc">—</div><div class="bar"><div class="fill" id="bAcc"></div></div></div>
+  <div class="mc"><div class="lbl">Precision</div><div class="val" id="mPre">—</div><div class="bar"><div class="fill" id="bPre"></div></div></div>
+  <div class="mc"><div class="lbl">Recall</div><div class="val" id="mRec">—</div><div class="bar"><div class="fill" id="bRec"></div></div></div>
+  <div class="mc"><div class="lbl">F1 Score</div><div class="val" id="mF1">—</div><div class="bar"><div class="fill" id="bF1"></div></div></div>
+  <div class="mc"><div class="lbl">AUC–ROC</div><div class="val" id="mAuc">—</div><div class="bar"><div class="fill" id="bAuc"></div></div></div>
+</div>
+
+<!-- Base model chips -->
+<div class="base-row" id="baseRow"></div>
+
+<!-- Main layout -->
+<div class="main">
+
+  <!-- Left: form -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="icon">🔬</span>
+      <h2>Patient Feature Input</h2>
+      <span class="tag tag-sel" id="selCount">— RFE-selected</span>
+      <span class="tag tag-all" id="allCount">— total features</span>
+    </div>
+
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot sel"></div>RFE-selected (used by model)</div>
+      <div class="leg-item"><div class="leg-dot all"></div>Other features (still sent)</div>
+    </div>
+
+    <div id="formBody">
+      <div style="color:var(--muted);font-size:.85rem;padding:1rem 0">Loading feature fields…</div>
+    </div>
+
+    <div class="alert" id="errMsg"></div>
+    <button class="predict-btn" id="predictBtn" onclick="runPrediction()">Run Prediction</button>
+  </div>
+
+  <!-- Right: result + prob -->
+  <div class="right">
+    <div class="result-box" id="resultBox">
+      <div class="empty-icon">🧬</div>
+      <div class="empty-txt">Fill in the patient features<br/>and click <strong>Run Prediction</strong></div>
+    </div>
+    <div class="prob-card" id="probCard" style="display:none">
+      <div class="prob-title">Class Probabilities</div>
+      <div id="probBars"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>NeuroScan · Hybrid Ensemble Alzheimer Detection System &nbsp;·&nbsp; For research purposes only</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let allFeatures = [], selectedFeatures = [];
+
+// ── Helpers ──────────────────────────────────────────────
+function cssClass(label){
+  const l = String(label).toLowerCase();
+  if(l==="1"||l.includes("alzheimer")||l.includes(" ad")) return "alz";
+  return "nc";
+}
+const icons  = { alz:"⚠️", nc:"✅" };
+const labels = { alz:"Alzheimer's Disease", nc:"No Cognitive Impairment" };
+const subs   = {
+  alz:"Signs consistent with Alzheimer's Disease detected. Please consult a neurologist.",
+  nc :"No significant cognitive impairment detected based on current inputs."
+};
+
+// ── Load metrics ─────────────────────────────────────────
+fetch("/api/metrics").then(r=>r.json()).then(m=>{
+  const fmt = v => (v*100).toFixed(1)+"%";
+  $("mAcc").textContent = fmt(m.accuracy);
+  $("mPre").textContent = fmt(m.precision);
+  $("mRec").textContent = fmt(m.recall);
+  $("mF1").textContent  = fmt(m.f1);
+  $("mAuc").textContent = fmt(m.auc);
+
+  if(m.classes) $("classTag").textContent = m.classes.length+"  classes";
+
+  setTimeout(()=>{
+    [["Acc",m.accuracy],["Pre",m.precision],["Rec",m.recall],["F1",m.f1],["Auc",m.auc]]
+      .forEach(([k,v])=>{ $("b"+k).style.width=(v*100)+"%" });
+  }, 400);
+
+  // Base model chips
+  if(m.base_accuracy){
+    const row = $("baseRow");
+    Object.entries(m.base_accuracy).forEach(([name,acc])=>{
+      const d = document.createElement("div");
+      d.className = "base-chip";
+      d.innerHTML = `<span class="bc-name">${name}</span><span class="bc-val">${(acc*100).toFixed(1)}%</span>`;
+      row.appendChild(d);
+    });
+    // Stacked
+    const d = document.createElement("div");
+    d.className = "base-chip";
+    d.style.borderColor = "rgba(79,142,247,.4)";
+    d.innerHTML = `<span class="bc-name" style="color:var(--accent)">Stacked</span><span class="bc-val" style="color:var(--accent)">${(m.accuracy*100).toFixed(1)}%</span>`;
+    row.appendChild(d);
+  }
+});
+
+// ── Build form fields ─────────────────────────────────────
+fetch("/api/features").then(r=>r.json()).then(data=>{
+  allFeatures      = data.features;
+  selectedFeatures = data.selected || [];
+
+  $("selCount").textContent = selectedFeatures.length + " RFE-selected";
+  $("allCount").textContent  = allFeatures.length + " total features";
+
+  // Group: selected first, then others
+  const selFeats  = allFeatures.filter(f => selectedFeatures.includes(f.name));
+  const restFeats = allFeatures.filter(f => !selectedFeatures.includes(f.name));
+
+  const body = $("formBody");
+  body.innerHTML = "";
+
+  if(selFeats.length){
+    body.insertAdjacentHTML("beforeend",
+      `<div class="sec-hdr"><span class="sec-dot"></span>Key Predictive Features (RFE-selected — most important)</div>`);
+    const g = document.createElement("div"); g.className="field-grid";
+    selFeats.forEach(f => g.appendChild(buildField(f, true)));
+    body.appendChild(g);
+  }
+  if(restFeats.length){
+    body.insertAdjacentHTML("beforeend",
+      `<div class="sec-hdr"><span class="sec-dot amber"></span>Additional Features</div>`);
+    const g = document.createElement("div"); g.className="field-grid";
+    restFeats.forEach(f => g.appendChild(buildField(f, false)));
+    body.appendChild(g);
+  }
+});
+
+function buildField(f, isSelected){
+  const wrap = document.createElement("div");
+  wrap.className = "field" + (isSelected ? " selected-feat" : "");
+
+  const inner = document.createElement("div");
+  inner.className = "field-inner";
+
+  const lbl = document.createElement("label");
+  lbl.setAttribute("for", "f_"+f.name);
+  lbl.innerHTML = f.label + (isSelected ? `<span class="star">★</span>` : "");
+  inner.appendChild(lbl);
+
+  if(f.options){
+    // Dropdown
+    const sel = document.createElement("select");
+    sel.id = "f_"+f.name;
+    sel.dataset.feature = f.name;
+    sel.dataset.ftype = "select";
+    f.options.forEach(opt=>{
+      const o = document.createElement("option");
+      o.value = opt.value; o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+    inner.appendChild(sel);
+    wrap.appendChild(inner);
+  } else {
+    // Number input
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.step = f.step;
+    inp.min  = f.min;
+    inp.max  = f.max;
+    inp.placeholder = `e.g. ${Math.round((f.min+f.max)/2*10)/10}`;
+    inp.id = "f_"+f.name;
+    inp.dataset.feature = f.name;
+    inp.dataset.ftype = "number";
+    inner.appendChild(inp);
+    wrap.appendChild(inner);
+
+    // Range hint
+    const hint = document.createElement("div");
+    hint.className = "range-hint";
+    hint.innerHTML = `Range: <span class="range-pill">${f.min}</span> – <span class="range-pill">${f.max}</span>`;
+    wrap.appendChild(hint);
+  }
+
+  return wrap;
+}
+
+// ── Run prediction ────────────────────────────────────────
+async function runPrediction(){
+  const btn = $("predictBtn");
+  const err = $("errMsg");
+  err.style.display = "none";
+
+  const payload = {};
+  document.querySelectorAll("[data-feature]").forEach(el=>{
+    const v = el.dataset.ftype === "select" ? parseInt(el.value) : (parseFloat(el.value)||0);
+    payload[el.dataset.feature] = v;
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="sp"></span>Analysing…`;
+
+  try {
+    const res  = await fetch("/api/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data = await res.json();
+    if(data.status!=="ok") throw new Error(data.message);
+
+    const cls  = cssClass(data.prediction);
+    const box  = $("resultBox");
+    box.className = "result-box fi " + cls;
+    box.innerHTML = `
+      <div class="result-icon">${icons[cls]||"🔵"}</div>
+      <div class="result-label">${data.prediction==="1"||data.prediction.toLowerCase().includes("alzheimer") ? "Alzheimer's Disease" : "No Cognitive Impairment"}</div>
+      <div class="result-sub">${subs[cls]||""}</div>
+    `;
+
+    const probCard = $("probCard");
+    const bars     = $("probBars");
+    probCard.style.display = "block";
+    bars.innerHTML = "";
+
+    const classMaps = {"0":"No Cognitive Impairment","1":"Alzheimer's Disease"};
+
+    Object.entries(data.probabilities)
+      .sort((a,b)=>b[1]-a[1])
+      .forEach(([lbl, pct])=>{
+        const c    = cssClass(lbl);
+        const name = classMaps[lbl] || lbl;
+        const row  = document.createElement("div");
+        row.className = "prob-row fi";
+        row.innerHTML = `
+          <div class="prob-rh"><span class="pname">${name}</span><span class="ppct">${pct.toFixed(1)}%</span></div>
+          <div class="prob-track"><div class="prob-fill ${c}" id="pb_${c}"></div></div>
+        `;
+        bars.appendChild(row);
+        setTimeout(()=>{ row.querySelector(".prob-fill").style.width = pct+"%" }, 80);
+      });
+
+  } catch(e){
+    err.textContent = "Error: "+e.message;
+    err.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Run Prediction";
+  }
+}
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !$("predictBtn").disabled) runPrediction();
+});
+</script>
+</body>
+</html>
